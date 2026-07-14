@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplikasi Kolektor Luaran Inovasi</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,19 +21,13 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Google Material Symbols (React Safe Icons) -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-    
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* Custom Scrollbar & Utility Classes */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -53,7 +46,6 @@
         
         body { transition: background-color 0.3s, color 0.3s; }
 
-        /* Material Symbols Setup */
         .material-symbols-rounded {
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             display: inline-block;
@@ -61,13 +53,11 @@
             line-height: 1;
         }
 
-        /* Print Style Setup */
         @media print {
             body { background: white !important; color: black !important; }
             aside, header, .no-print { display: none !important; }
             main { overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
             .glass-panel { box-shadow: none !important; border: 1px solid #ccc !important; background: transparent !important; }
-            .print-only { display: block !important; }
             ::-webkit-scrollbar { display: none; }
         }
     </style>
@@ -78,53 +68,44 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
 
-        // --- KONFIGURASI API BACKEND ---
-        // PENTING: Ganti nilai GAS_URL di bawah ini dengan URL Web App dari Apps Script Anda!
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbx8TpGpfiLNSrYo2Ye6TQKuTre0oVq88Qmco-L67-_5eevkXfQN0uCQ9qSmoiLG4OHq/exec';
+        // ====================================================================
+        // PENTING BOS! MASUKKAN URL WEB APP ANDA DI DALAM TANDA KUTIP DI BAWAH INI
+        // CONTOH: const GAS_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+        // ====================================================================
+        const GAS_URL = 'https://script.google.com/a/macros/gdrive1.biz.id/s/AKfycbx8TpGpfiLNSrYo2Ye6TQKuTre0oVq88Qmco-L67-_5eevkXfQN0uCQ9qSmoiLG4OHq/exec';
         
-        // Mock Mode akan aktif jika URL belum diganti (sebagai fallback/preview)
-        const isMockMode = GAS_URL === https://script.google.com/a/macros/gdrive1.biz.id/s/AKfycbx8TpGpfiLNSrYo2Ye6TQKuTre0oVq88Qmco-L67-_5eevkXfQN0uCQ9qSmoiLG4OHq/exec || GAS_URL === '';
+        const isMockMode = GAS_URL === 'MASUKKAN_URL_WEB_APP_APPSCRIPT_DISINI' || GAS_URL === '';
         
         const mockData = [
-            { id: 'INV-A1B2', timestamp: '2026-07-10T10:00:00Z', nim: '19001111', nama: 'Budi Santoso', prodi: 'Teknik Informatika', judul: 'Sistem Deteksi Penyakit Tanaman', kategori: 'Paten', deskripsi: 'Aplikasi AI', link: 'http://link', status: 'Disetujui' },
-            { id: 'INV-C3D4', timestamp: '2026-07-11T14:30:00Z', nim: '19002222', nama: 'Siti Aminah', prodi: 'Sistem Informasi', judul: 'Blockchain in Supply Chain', kategori: 'Jurnal Internasional', deskripsi: 'Scopus Q2', link: 'http://link', status: 'Review' }
+            { id: 'INV-A1B2', timestamp: '2026-07-10T10:00:00Z', nim: '19001111', nama: 'Budi Santoso', prodi: 'Teknik Informatika', judul: 'Sistem Deteksi Penyakit Tanaman', kategori: 'Paten', deskripsi: 'Aplikasi AI', link: 'http://link', status: 'Disetujui' }
         ];
 
-        // Helper function untuk mengirim request ke Apps Script
         const fetchGasApi = async (action, payload = {}) => {
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    // Menggunakan text/plain untuk bypass CORS preflight request di browser
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Aman dari blokir CORS
                     body: JSON.stringify({ action, ...payload })
                 });
                 return await response.json();
             } catch (err) {
                 console.error("Fetch Error:", err);
-                return { success: false, msg: 'Gagal menghubungi server database.' };
+                return { success: false, msg: 'Gagal menghubungi server Google Apps Script.' };
             }
         };
 
         const API = {
             login: async (user, pass) => {
-                if(isMockMode) {
-                    return new Promise(resolve => setTimeout(() => {
-                        if (user === 'admin' && pass === 'admin123') resolve({ success: true, name: 'Administrator' });
-                        else resolve({ success: false, msg: 'Username/Password salah (Mock Mode)' });
-                    }, 1000));
-                }
+                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: user==='admin'&&pass==='admin123', name: 'Admin', msg: 'Username/Password salah (Mock)' }), 1000));
                 return await fetchGasApi('login', { user, pass });
             },
             getData: async () => {
                 if(isMockMode) return new Promise(resolve => setTimeout(() => resolve(mockData), 800));
-                
                 const res = await fetchGasApi('getData');
-                // Pastikan format kembalian selalu Array
                 return Array.isArray(res) ? res : [];
             },
             saveData: async (data) => {
-                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: true, msg: 'Data disimpan (Mock)' }), 1000));
                 return await fetchGasApi('saveData', { data });
             },
             changePassword: async (user, oldPass, newPass) => {
@@ -133,7 +114,6 @@
             }
         };
 
-        // --- COMPONENTS ---
         const Toast = ({ message, type, onClose }) => {
             useEffect(() => {
                 const timer = setTimeout(onClose, 3000);
@@ -190,7 +170,7 @@
                                     <div className="relative">
                                         <span className="material-symbols-rounded absolute left-3 top-[10px] text-[20px] text-slate-400">person</span>
                                         <input type="text" value={user} onChange={(e) => setUser(e.target.value)} required 
-                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition" placeholder="Masukkan username" />
+                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 outline-none transition" placeholder="Masukkan username" />
                                     </div>
                                 </div>
                                 <div>
@@ -198,18 +178,17 @@
                                     <div className="relative">
                                         <span className="material-symbols-rounded absolute left-3 top-[10px] text-[20px] text-slate-400">lock</span>
                                         <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} required 
-                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition" placeholder="••••••••" />
+                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 outline-none transition" placeholder="••••••••" />
                                     </div>
                                 </div>
-                                <button type="submit" disabled={loading} 
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition duration-300 flex justify-center items-center gap-2">
+                                <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition flex justify-center items-center gap-2">
                                     {loading ? <span className="material-symbols-rounded animate-spin text-[20px]">progress_activity</span> : 'Masuk Dashboard'}
                                 </button>
                             </form>
                             
                             {isMockMode && (
                                 <div className="mt-6 text-center text-xs text-slate-400 bg-slate-800/50 py-2 rounded-lg">
-                                    <span className="text-emerald-400 font-semibold">Mock Mode Aktif</span><br/>
+                                    <span className="text-emerald-400 font-semibold">Mock Mode Aktif (Coba Tanpa Deploy GAS)</span><br/>
                                     User: admin | Pass: admin123
                                 </div>
                             )}
@@ -224,70 +203,47 @@
             const doughnutRef = useRef(null);
 
             const stats = useMemo(() => {
-                // BUG FIX: Proteksi jika data bernilai null/undefined
                 const safeData = Array.isArray(data) ? data : [];
-                const total = safeData.length;
-                const disetujui = safeData.filter(d => d.status === 'Disetujui').length;
-                const paten = safeData.filter(d => d.kategori === 'Paten').length;
-                const startup = safeData.filter(d => d.kategori === 'Startup').length;
-                return { total, disetujui, paten, startup };
-            }, [data]);
-
-            useEffect(() => {
-                let myChart = null;
-                let myDoughnut = null;
-
-                if (chartRef.current && doughnutRef.current && data && data.length > 0) {
-                    try {
-                        const ctx = chartRef.current.getContext('2d');
-                        const categories = ['Paten', 'Jurnal Internasional', 'Jurnal Nasional', 'Hak Cipta', 'Produk Tepat Guna', 'Startup'];
-                        const counts = categories.map(cat => data.filter(d => d.kategori === cat).length);
-
-                        myChart = new Chart(ctx, {
-                            type: 'bar',
-                            data: {
-                                labels: categories,
-                                datasets: [{ label: 'Jumlah Inovasi', data: counts, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 8 }]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false,
-                                plugins: { legend: { display: false } },
-                                scales: { y: { beginAtZero: true, grid: { color: 'rgba(156, 163, 175, 0.1)' } }, x: { grid: { display: false } } }
-                            }
-                        });
-
-                        const ctx2 = doughnutRef.current.getContext('2d');
-                        const statuses = ['Draft', 'Review', 'Disetujui', 'Ditolak'];
-                        const statusCounts = statuses.map(s => data.filter(d => d.status === s).length);
-
-                        myDoughnut = new Chart(ctx2, {
-                            type: 'doughnut',
-                            data: {
-                                labels: statuses,
-                                datasets: [{ data: statusCounts, backgroundColor: ['#94a3b8', '#fbbf24', '#10b981', '#ef4444'], borderWidth: 0 }]
-                            },
-                            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
-                        });
-                    } catch (e) {
-                        console.error("Error rendering charts:", e);
-                    }
-                }
-                
-                return () => { 
-                    if (myChart) myChart.destroy(); 
-                    if (myDoughnut) myDoughnut.destroy(); 
+                return { 
+                    total: safeData.length, 
+                    disetujui: safeData.filter(d => d.status === 'Disetujui').length, 
+                    paten: safeData.filter(d => d.kategori === 'Paten').length, 
+                    startup: safeData.filter(d => d.kategori === 'Startup').length 
                 };
             }, [data]);
 
+            useEffect(() => {
+                let myChart = null, myDoughnut = null;
+                if (chartRef.current && doughnutRef.current && Array.isArray(data) && data.length > 0) {
+                    try {
+                        const categories = ['Paten', 'Jurnal Internasional', 'Jurnal Nasional', 'Hak Cipta', 'Produk Tepat Guna', 'Startup'];
+                        const counts = categories.map(cat => data.filter(d => d.kategori === cat).length);
+                        myChart = new Chart(chartRef.current, {
+                            type: 'bar',
+                            data: { labels: categories, datasets: [{ label: 'Jumlah', data: counts, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 8 }] },
+                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                        });
+
+                        const statuses = ['Draft', 'Review', 'Disetujui', 'Ditolak'];
+                        myDoughnut = new Chart(doughnutRef.current, {
+                            type: 'doughnut',
+                            data: { labels: statuses, datasets: [{ data: statuses.map(s => data.filter(d => d.status === s).length), backgroundColor: ['#94a3b8', '#fbbf24', '#10b981', '#ef4444'], borderWidth: 0 }] },
+                            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+                        });
+                    } catch (e) { console.error("Chart Error:", e); }
+                }
+                return () => { if (myChart) myChart.destroy(); if (myDoughnut) myDoughnut.destroy(); };
+            }, [data]);
+
             return (
-                <div className="space-y-6 animate-fade-in">
+                <div className="space-y-6">
                     <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                         <div className="absolute right-0 top-0 opacity-20 transform translate-x-4 -translate-y-4">
                             <span className="material-symbols-rounded text-[150px]">workspace_premium</span>
                         </div>
                         <div className="relative z-10">
                             <h2 className="text-2xl font-bold mb-1">Ringkasan Luaran Mahasiswa</h2>
-                            <p className="text-emerald-50">Pantau perkembangan dan kualitas inovasi mahasiswa terkini.</p>
+                            <p className="text-emerald-50">Pantau perkembangan inovasi mahasiswa secara realtime.</p>
                         </div>
                     </div>
 
@@ -295,18 +251,13 @@
                         {[
                             { title: 'Total Inovasi', value: stats.total, icon: 'layers', color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
                             { title: 'Disetujui', value: stats.disetujui, icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-                            { title: 'Paten Tercatat', value: stats.paten, icon: 'shield', color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+                            { title: 'Paten', value: stats.paten, icon: 'shield', color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
                             { title: 'Startup Aktif', value: stats.startup, icon: 'rocket_launch', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-                        ].map((stat, i) => (
+                        ].map((s, i) => (
                             <div key={i} className="glass-panel p-6 rounded-2xl shadow-sm hover:shadow-md transition">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stat.title}</p>
-                                        <h3 className="text-3xl font-bold text-slate-800 dark:text-white mt-2">{stat.value}</h3>
-                                    </div>
-                                    <div className={`p-3 rounded-xl ${stat.bg}`}>
-                                        <span className={`material-symbols-rounded text-[24px] ${stat.color}`}>{stat.icon}</span>
-                                    </div>
+                                    <div><p className="text-sm text-slate-500 font-medium">{s.title}</p><h3 className="text-3xl font-bold mt-2">{s.value}</h3></div>
+                                    <div className={`p-3 rounded-xl ${s.bg}`}><span className={`material-symbols-rounded text-[24px] ${s.color}`}>{s.icon}</span></div>
                                 </div>
                             </div>
                         ))}
@@ -314,16 +265,12 @@
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
                         <div className="lg:col-span-2 glass-panel p-6 rounded-2xl shadow-sm flex flex-col h-full">
-                            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white">Distribusi Kategori Inovasi</h3>
-                            <div className="flex-grow relative w-full h-full">
-                                <canvas ref={chartRef}></canvas>
-                            </div>
+                            <h3 className="text-lg font-semibold mb-4">Distribusi Kategori</h3>
+                            <div className="flex-grow relative"><canvas ref={chartRef}></canvas></div>
                         </div>
                         <div className="glass-panel p-6 rounded-2xl shadow-sm flex flex-col h-full">
-                            <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-white">Status Penilaian</h3>
-                            <div className="flex-grow relative w-full h-full">
-                                <canvas ref={doughnutRef}></canvas>
-                            </div>
+                            <h3 className="text-lg font-semibold mb-4">Status Penilaian</h3>
+                            <div className="flex-grow relative"><canvas ref={doughnutRef}></canvas></div>
                         </div>
                     </div>
                 </div>
@@ -334,185 +281,77 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [filterStatus, setFilterStatus] = useState('Semua');
             const [isModalOpen, setIsModalOpen] = useState(false);
-            const [formData, setFormData] = useState({ id: '', nim: '', nama: '', prodi: '', judul: '', kategori: 'Paten', deskripsi: '', link: '', status: 'Draft' });
+            const [formData, setFormData] = useState({});
             const [loading, setLoading] = useState(false);
 
-            // BUG FIX: Proteksi toLowerCase dari variabel kosong
-            const safeData = Array.isArray(data) ? data : [];
-            const filteredData = safeData.filter(item => {
-                const judulLower = item.judul ? String(item.judul).toLowerCase() : '';
-                const namaLower = item.nama ? String(item.nama).toLowerCase() : '';
-                const searchLower = (searchTerm || '').toLowerCase();
-                
-                const matchSearch = judulLower.includes(searchLower) || namaLower.includes(searchLower);
-                const matchStatus = filterStatus === 'Semua' || item.status === filterStatus;
-                return matchSearch && matchStatus;
+            const filteredData = (Array.isArray(data) ? data : []).filter(item => {
+                const searchLower = searchTerm.toLowerCase();
+                const matchSearch = String(item.judul||'').toLowerCase().includes(searchLower) || String(item.nama||'').toLowerCase().includes(searchLower);
+                return matchSearch && (filterStatus === 'Semua' || item.status === filterStatus);
             });
 
-            const handleEdit = (item) => {
-                setFormData(item);
-                setIsModalOpen(true);
-            };
-
-            const handleAdd = () => {
-                setFormData({ id: '', nim: '', nama: '', prodi: '', judul: '', kategori: 'Paten', deskripsi: '', link: '', status: 'Draft' });
-                setIsModalOpen(true);
-            };
-
-            const handleSubmit = async (e) => {
+            const handleSave = async (e) => {
                 e.preventDefault();
                 setLoading(true);
                 const submitData = { ...formData, id: formData.id || 'INV-' + Math.random().toString(36).substr(2, 6).toUpperCase() };
                 const res = await API.saveData(submitData);
                 setLoading(false);
-                
-                if (res.success) {
-                    showToast('Data berhasil disimpan!', 'success');
-                    setIsModalOpen(false);
-                    onRefresh();
-                }
+                if (res.success) { showToast('Data disimpan!', 'success'); setIsModalOpen(false); onRefresh(); }
             };
 
             return (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Manajemen Data Inovasi</h2>
-                        <button onClick={handleAdd} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-emerald-500/20 transition flex items-center gap-2">
-                            <span className="material-symbols-rounded text-[20px]">add</span> Tambah Luaran
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold">Manajemen Data</h2>
+                        <button onClick={() => { setFormData({kategori: 'Paten', status: 'Draft'}); setIsModalOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2">
+                            <span className="material-symbols-rounded">add</span> Tambah
                         </button>
                     </div>
 
-                    <div className="glass-panel p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row gap-4">
+                    <div className="glass-panel p-4 rounded-2xl flex gap-4">
                         <div className="relative flex-1">
-                            <span className="material-symbols-rounded absolute left-3 top-[10px] text-[20px] text-slate-400">search</span>
-                            <input type="text" placeholder="Cari judul atau nama mahasiswa..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 outline-none" />
+                            <span className="material-symbols-rounded absolute left-3 top-[10px] text-slate-400">search</span>
+                            <input type="text" placeholder="Cari..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border rounded-xl py-2 pl-10 outline-none" />
                         </div>
-                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-emerald-500 outline-none min-w-[150px]">
-                            <option value="Semua">Semua Status</option>
-                            <option value="Draft">Draft</option>
-                            <option value="Review">Review</option>
-                            <option value="Disetujui">Disetujui</option>
-                            <option value="Ditolak">Ditolak</option>
+                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-slate-50 dark:bg-slate-800 border rounded-xl px-4 py-2 outline-none">
+                            <option value="Semua">Semua Status</option><option value="Draft">Draft</option><option value="Review">Review</option><option value="Disetujui">Disetujui</option>
                         </select>
                     </div>
 
-                    <div className="glass-panel rounded-2xl shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-sm">
-                                        <th className="p-4 font-semibold">Judul Inovasi & Mahasiswa</th>
-                                        <th className="p-4 font-semibold">Kategori</th>
-                                        <th className="p-4 font-semibold">Status</th>
-                                        <th className="p-4 font-semibold text-right">Aksi</th>
+                    <div className="glass-panel rounded-2xl overflow-hidden overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead><tr className="bg-slate-100 dark:bg-slate-800/50 text-sm"><th className="p-4">Judul & Mahasiswa</th><th className="p-4">Kategori</th><th className="p-4">Status</th><th className="p-4 text-right">Aksi</th></tr></thead>
+                            <tbody>
+                                {filteredData.map((item, i) => (
+                                    <tr key={i} className="border-t dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                        <td className="p-4"><div>{item.judul}</div><div className="text-sm text-slate-500">{item.nama} ({item.nim})</div></td>
+                                        <td className="p-4"><span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">{item.kategori}</span></td>
+                                        <td className="p-4"><span className="px-2 py-1 bg-slate-200 text-slate-800 rounded-full text-xs">{item.status}</span></td>
+                                        <td className="p-4 text-right">
+                                            <button onClick={() => { setFormData(item); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-emerald-500"><span className="material-symbols-rounded">edit</span></button>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredData.length > 0 ? filteredData.map((item, i) => (
-                                        <tr key={i} className="border-t border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                            <td className="p-4">
-                                                <div className="font-semibold text-slate-800 dark:text-white line-clamp-1">{item.judul}</div>
-                                                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">{item.nama} ({item.nim}) - {item.prodi}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                                    {item.kategori}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                    ${item.status === 'Disetujui' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 
-                                                      item.status === 'Review' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
-                                                      item.status === 'Ditolak' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                                                      'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300'}`}>
-                                                    {item.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-emerald-500 transition rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                                                    <span className="material-symbols-rounded text-[20px]">edit</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan="4" className="p-8 text-center text-slate-500">
-                                                <span className="material-symbols-rounded text-[48px] mx-auto mb-3 opacity-50 block">inbox</span>
-                                                Tidak ada data yang ditemukan.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
 
                     {isModalOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                                    <h3 className="text-xl font-bold">{formData.id ? 'Edit Luaran' : 'Tambah Luaran Baru'}</h3>
-                                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-                                        <span className="material-symbols-rounded text-[24px]">close</span>
-                                    </button>
-                                </div>
-                                <div className="p-6 overflow-y-auto custom-scrollbar">
-                                    <form id="inovasiForm" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium mb-1">Judul Inovasi / Luaran</label>
-                                            <input type="text" required value={formData.judul} onChange={e => setFormData({...formData, judul: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">NIM Mahasiswa</label>
-                                            <input type="text" required value={formData.nim} onChange={e => setFormData({...formData, nim: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Nama Mahasiswa</label>
-                                            <input type="text" required value={formData.nama} onChange={e => setFormData({...formData, nama: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Program Studi</label>
-                                            <input type="text" required value={formData.prodi} onChange={e => setFormData({...formData, prodi: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Kategori Luaran</label>
-                                            <select value={formData.kategori} onChange={e => setFormData({...formData, kategori: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 outline-none">
-                                                <option className="dark:bg-slate-800" value="Paten">Paten</option>
-                                                <option className="dark:bg-slate-800" value="Hak Cipta">Hak Cipta (HAKI)</option>
-                                                <option className="dark:bg-slate-800" value="Jurnal Internasional">Jurnal Internasional</option>
-                                                <option className="dark:bg-slate-800" value="Jurnal Nasional">Jurnal Nasional</option>
-                                                <option className="dark:bg-slate-800" value="Produk Tepat Guna">Produk Tepat Guna</option>
-                                                <option className="dark:bg-slate-800" value="Startup">Startup / Bisnis</option>
-                                                <option className="dark:bg-slate-800" value="Lainnya">Lainnya</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium mb-1">Deskripsi Singkat</label>
-                                            <textarea rows="3" value={formData.deskripsi} onChange={e => setFormData({...formData, deskripsi: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 outline-none"></textarea>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Tautan Bukti (URL)</label>
-                                            <input type="url" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 outline-none" placeholder="https://..." />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Status Penilaian</label>
-                                            <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent focus:border-emerald-500 outline-none">
-                                                <option className="dark:bg-slate-800" value="Draft">Draft</option>
-                                                <option className="dark:bg-slate-800" value="Review">Sedang Direview</option>
-                                                <option className="dark:bg-slate-800" value="Disetujui">Disetujui</option>
-                                                <option className="dark:bg-slate-800" value="Ditolak">Ditolak</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
-                                    <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition">Batal</button>
-                                    <button form="inovasiForm" type="submit" disabled={loading} className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg flex items-center gap-2 transition">
-                                        {loading ? <span className="material-symbols-rounded animate-spin text-[20px]">progress_activity</span> : 'Simpan Data'}
-                                    </button>
-                                </div>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-6">
+                                <h3 className="text-xl font-bold mb-4">{formData.id ? 'Edit' : 'Tambah'} Luaran</h3>
+                                <form onSubmit={handleSave} className="grid grid-cols-2 gap-4">
+                                    <input required placeholder="Judul" value={formData.judul||''} onChange={e=>setFormData({...formData, judul: e.target.value})} className="col-span-2 p-2 border rounded" />
+                                    <input required placeholder="NIM" value={formData.nim||''} onChange={e=>setFormData({...formData, nim: e.target.value})} className="p-2 border rounded" />
+                                    <input required placeholder="Nama" value={formData.nama||''} onChange={e=>setFormData({...formData, nama: e.target.value})} className="p-2 border rounded" />
+                                    <input required placeholder="Prodi" value={formData.prodi||''} onChange={e=>setFormData({...formData, prodi: e.target.value})} className="p-2 border rounded" />
+                                    <select value={formData.kategori} onChange={e=>setFormData({...formData, kategori: e.target.value})} className="p-2 border rounded"><option value="Paten">Paten</option><option value="Jurnal Internasional">Jurnal Internasional</option><option value="Startup">Startup</option></select>
+                                    <input placeholder="Link Bukti" value={formData.link||''} onChange={e=>setFormData({...formData, link: e.target.value})} className="col-span-2 p-2 border rounded" />
+                                    <div className="col-span-2 flex justify-end gap-2 mt-4">
+                                        <button type="button" onClick={()=>setIsModalOpen(false)} className="px-4 py-2 border rounded">Batal</button>
+                                        <button type="submit" disabled={loading} className="px-4 py-2 bg-emerald-600 text-white rounded">{loading ? 'Menyimpan...' : 'Simpan'}</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}
@@ -520,166 +359,53 @@
             );
         };
 
-        // --- NEW COMPONENT: REPORT VIEW ---
-        const ReportView = ({ data }) => {
-            const handlePrint = () => {
-                window.print();
-            };
-
-            const safeData = Array.isArray(data) ? data : [];
-
-            return (
-                <div className="space-y-6 animate-fade-in w-full">
-                    <div className="flex justify-between items-center no-print">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Laporan Inovasi</h2>
-                            <p className="text-sm text-slate-500">Rekapitulasi seluruh data luaran inovasi.</p>
-                        </div>
-                        <button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-blue-500/20 transition flex items-center gap-2">
-                            <span className="material-symbols-rounded text-[20px]">print</span> Cetak / PDF
-                        </button>
-                    </div>
-
-                    <div className="glass-panel p-6 rounded-2xl shadow-sm bg-white dark:bg-slate-900 w-full overflow-hidden">
-                        {/* Header khusus saat di print */}
-                        <div className="text-center mb-6 hidden print:block text-black">
-                            <h1 className="text-2xl font-bold">Laporan Luaran Inovasi Mahasiswa</h1>
-                            <p className="text-slate-600">Dicetak pada: {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                            <hr className="my-4 border-slate-300" />
-                        </div>
-                        
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-700">
-                                <thead>
-                                    <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 print:bg-slate-100 print:text-black">
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">No</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">NIM</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">Nama Mahasiswa</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">Program Studi</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">Judul Inovasi</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">Kategori</th>
-                                        <th className="p-3 border border-slate-200 dark:border-slate-700 font-semibold text-sm">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {safeData.length > 0 ? safeData.map((item, i) => (
-                                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 print:text-black">
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{i + 1}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.nim}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.nama}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.prodi}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.judul}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.kategori}</td>
-                                            <td className="p-3 border border-slate-200 dark:border-slate-700 text-sm">{item.status}</td>
-                                        </tr>
-                                    )) : (
-                                        <tr>
-                                            <td colSpan="7" className="p-6 text-center text-slate-500">
-                                                Belum ada data inovasi.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+        const ReportView = ({ data }) => (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center no-print">
+                    <h2 className="text-2xl font-bold">Laporan Inovasi</h2>
+                    <button onClick={() => window.print()} className="bg-blue-600 text-white px-5 py-2 rounded-xl flex items-center gap-2"><span className="material-symbols-rounded">print</span> Cetak</button>
                 </div>
-            );
-        };
+                <div className="glass-panel p-6 rounded-2xl bg-white dark:bg-slate-900 w-full overflow-hidden">
+                    <div className="text-center mb-6 hidden print:block text-black">
+                        <h1 className="text-2xl font-bold">Laporan Luaran Inovasi</h1>
+                        <p>Dicetak pada: {new Date().toLocaleDateString('id-ID')}</p>
+                    </div>
+                    <table className="w-full text-left border-collapse border">
+                        <thead><tr className="bg-slate-100 text-slate-700 print:text-black"><th className="p-2 border">NIM</th><th className="p-2 border">Nama</th><th className="p-2 border">Judul</th><th className="p-2 border">Kategori</th></tr></thead>
+                        <tbody>{(Array.isArray(data)?data:[]).map((item, i) => <tr key={i}><td className="p-2 border print:text-black">{item.nim}</td><td className="p-2 border print:text-black">{item.nama}</td><td className="p-2 border print:text-black">{item.judul}</td><td className="p-2 border print:text-black">{item.kategori}</td></tr>)}</tbody>
+                    </table>
+                </div>
+            </div>
+        );
 
-        // --- NEW COMPONENT: SETTINGS VIEW ---
         const SettingsView = ({ user, toggleTheme, isDark, showToast }) => {
             const [oldPass, setOldPass] = useState('');
             const [newPass, setNewPass] = useState('');
-            const [loading, setLoading] = useState(false);
-
-            const handlePasswordChange = async (e) => {
+            const handlePass = async (e) => {
                 e.preventDefault();
-                if(!oldPass || !newPass) return;
-                setLoading(true);
                 const res = await API.changePassword(user, oldPass, newPass);
-                setLoading(false);
-                if(res.success) {
-                    showToast(res.msg, 'success');
-                    setOldPass('');
-                    setNewPass('');
-                } else {
-                    showToast(res.msg, 'error');
-                }
+                showToast(res.msg, res.success ? 'success' : 'error');
+                if(res.success) { setOldPass(''); setNewPass(''); }
             };
-
             return (
-                <div className="space-y-6 animate-fade-in w-full max-w-4xl mx-auto">
-                    <div>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Pengaturan Sistem</h2>
-                        <p className="text-sm text-slate-500">Kelola preferensi akun dan tampilan aplikasi.</p>
-                    </div>
-
+                <div className="space-y-6 max-w-4xl mx-auto">
+                    <h2 className="text-2xl font-bold">Pengaturan</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Profil & Keamanan */}
-                        <div className="glass-panel p-6 rounded-2xl shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                            <div className="flex items-center gap-3 mb-6">
-                                <span className="material-symbols-rounded text-emerald-500 text-[28px]">manage_accounts</span>
-                                <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Profil & Keamanan</h3>
-                            </div>
-                            
-                            <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Akun Aktif</p>
-                                <p className="font-bold text-slate-800 dark:text-white text-lg">{user}</p>
-                                <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Administrator</span>
-                            </div>
-
-                            <form onSubmit={handlePasswordChange} className="space-y-4">
-                                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Ubah Password</h4>
-                                <div>
-                                    <input type="password" placeholder="Password Lama" value={oldPass} onChange={e => setOldPass(e.target.value)} required className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition" />
-                                </div>
-                                <div>
-                                    <input type="password" placeholder="Password Baru" value={newPass} onChange={e => setNewPass(e.target.value)} required className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition" />
-                                </div>
-                                <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-medium shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
-                                    {loading ? <span className="material-symbols-rounded animate-spin text-[20px]">progress_activity</span> : 'Simpan Password Baru'}
-                                </button>
+                        <div className="glass-panel p-6 rounded-2xl">
+                            <h3 className="text-lg font-semibold mb-4">Ubah Password</h3>
+                            <form onSubmit={handlePass} className="space-y-4">
+                                <input type="password" placeholder="Password Lama" value={oldPass} onChange={e=>setOldPass(e.target.value)} required className="w-full p-3 rounded-xl border outline-none text-black" />
+                                <input type="password" placeholder="Password Baru" value={newPass} onChange={e=>setNewPass(e.target.value)} required className="w-full p-3 rounded-xl border outline-none text-black" />
+                                <button type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl">Simpan Password</button>
                             </form>
                         </div>
-
-                        {/* Preferensi Aplikasi */}
-                        <div className="space-y-6">
-                            <div className="glass-panel p-6 rounded-2xl shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <span className="material-symbols-rounded text-blue-500 text-[28px]">palette</span>
-                                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Tampilan</h3>
-                                </div>
-                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <div>
-                                        <p className="font-medium text-slate-800 dark:text-white">Mode Gelap (Dark Mode)</p>
-                                        <p className="text-sm text-slate-500">Sesuaikan tema untuk kenyamanan mata.</p>
-                                    </div>
-                                    <button onClick={toggleTheme} className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${isDark ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="glass-panel p-6 rounded-2xl shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="material-symbols-rounded text-purple-500 text-[28px]">info</span>
-                                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Tentang Aplikasi</h3>
-                                </div>
-                                <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-                                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
-                                        <span>Versi Aplikasi</span>
-                                        <span className="font-medium text-slate-800 dark:text-white">V5.0 Ultimate</span>
-                                    </div>
-                                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
-                                        <span>Framework Backend</span>
-                                        <span className="font-medium text-slate-800 dark:text-white">Google Apps Script</span>
-                                    </div>
-                                    <div className="flex justify-between pb-2">
-                                        <span>Framework Frontend</span>
-                                        <span className="font-medium text-slate-800 dark:text-white">React + Tailwind CSS</span>
-                                    </div>
-                                </div>
+                        <div className="glass-panel p-6 rounded-2xl">
+                            <h3 className="text-lg font-semibold mb-4">Tampilan</h3>
+                            <div className="flex justify-between items-center p-4 border rounded-xl">
+                                <span>Dark Mode</span>
+                                <button onClick={toggleTheme} className={`h-7 w-12 rounded-full transition-colors ${isDark ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                    <span className={`block h-5 w-5 rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -689,132 +415,61 @@
 
         const App = () => {
             const [user, setUser] = useState(null);
-            const [activeMenu, setActiveMenu] = useState('dashboard');
+            const [active, setActive] = useState('dashboard');
             const [isDark, setIsDark] = useState(false);
-            const [sidebarOpen, setSidebarOpen] = useState(false);
             const [toast, setToast] = useState(null);
             const [data, setData] = useState([]);
-            const [loadingData, setLoadingData] = useState(false);
 
             useEffect(() => {
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    setIsDark(true);
-                    document.documentElement.classList.add('dark');
+                    setIsDark(true); document.documentElement.classList.add('dark');
                 }
             }, []);
 
-            const toggleTheme = () => {
-                setIsDark(!isDark);
-                document.documentElement.classList.toggle('dark');
-            };
-
+            const toggleTheme = () => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); };
+            
             const loadData = async () => {
-                setLoadingData(true);
                 try {
                     const result = await API.getData();
-                    // BUG FIX: Pastikan format state selalu berupa Array
                     setData(Array.isArray(result) ? result : []);
-                } catch(e) {
-                    setData([]);
-                }
-                setLoadingData(false);
+                } catch(e) { setData([]); }
             };
 
-            useEffect(() => {
-                if (user) loadData();
-            }, [user]);
-
-            const hour = new Date().getHours();
-            const greeting = hour < 11 ? 'Selamat Pagi ☀️' : hour < 15 ? 'Selamat Siang 🌤️' : hour < 18 ? 'Selamat Sore 🌅' : 'Selamat Malam 🌙';
+            useEffect(() => { if (user) loadData(); }, [user]);
 
             if (!user) return <Login onLogin={setUser} />;
 
             return (
                 <div className="flex h-screen overflow-hidden">
-                    {sidebarOpen && <div className="fixed inset-0 bg-slate-900/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)}></div>}
-                    
-                    <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 glass-panel border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-                        <div className="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
-                            <div className="w-10 h-10 bg-gradient-to-tr from-emerald-500 to-emerald-300 rounded-xl flex items-center justify-center shadow-lg">
-                                <span className="material-symbols-rounded text-[24px] text-white">lightbulb</span>
-                            </div>
-                            <span className="font-bold text-lg text-slate-800 dark:text-white">InovaHub</span>
-                        </div>
-                        
-                        <nav className="flex-1 px-4 py-6 space-y-2">
-                            {[
-                                { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
-                                { id: 'data', icon: 'database', label: 'Data Inovasi' },
-                                { id: 'report', icon: 'bar_chart', label: 'Laporan Inovasi' },
-                                { id: 'settings', icon: 'settings', label: 'Pengaturan' }
-                            ].map(item => (
-                                <button key={item.id} onClick={() => { setActiveMenu(item.id); setSidebarOpen(false); }}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${activeMenu === item.id ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
-                                    <span className="material-symbols-rounded text-[24px]">{item.icon}</span> {item.label}
+                    <aside className="w-64 glass-panel border-r flex flex-col hidden lg:flex">
+                        <div className="p-6 font-bold text-xl flex items-center gap-2"><span className="material-symbols-rounded text-emerald-500">lightbulb</span> InovaHub</div>
+                        <nav className="flex-1 px-4 space-y-2">
+                            {[{id:'dashboard', icon:'dashboard', label:'Dashboard'}, {id:'data', icon:'database', label:'Data'}, {id:'report', icon:'bar_chart', label:'Laporan'}, {id:'settings', icon:'settings', label:'Pengaturan'}].map(m => (
+                                <button key={m.id} onClick={() => setActive(m.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl ${active === m.id ? 'bg-emerald-500/10 text-emerald-600' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                                    <span className="material-symbols-rounded">{m.icon}</span> {m.label}
                                 </button>
                             ))}
                         </nav>
-                        
-                        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                            <div className="flex items-center gap-3 px-4 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                                <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-sm">
-                                    {user.charAt(0)}
-                                </div>
-                                <div className="flex-1 overflow-hidden">
-                                    <p className="text-sm font-semibold truncate text-slate-800 dark:text-white">{user}</p>
-                                    <p className="text-xs text-slate-500 truncate">Administrator</p>
-                                </div>
-                                <button onClick={() => setUser(null)} className="text-slate-400 hover:text-red-500">
-                                    <span className="material-symbols-rounded text-[20px]">logout</span>
-                                </button>
-                            </div>
+                        <div className="p-4 border-t flex justify-between items-center">
+                            <span className="font-semibold">{user}</span>
+                            <button onClick={() => setUser(null)} className="text-red-500"><span className="material-symbols-rounded">logout</span></button>
                         </div>
                     </aside>
 
-                    <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-                        <header className="glass-panel border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-10">
-                            <div className="flex items-center gap-4">
-                                <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-500 hover:text-emerald-500 flex items-center justify-center">
-                                    <span className="material-symbols-rounded text-[24px]">menu</span>
-                                </button>
-                                <div>
-                                    <h1 className="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">{greeting}</h1>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-4">
-                                {isMockMode && <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-md font-medium border border-amber-200">Mock Mode</span>}
-                                <button onClick={toggleTheme} className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-emerald-500 transition flex items-center justify-center">
-                                    <span className="material-symbols-rounded text-[20px]">{isDark ? 'light_mode' : 'dark_mode'}</span>
-                                </button>
-                                <div className="hidden sm:block text-right">
-                                    <p className="text-sm font-medium text-slate-800 dark:text-white">{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                </div>
+                    <main className="flex-1 flex flex-col h-screen overflow-hidden">
+                        <header className="glass-panel border-b px-6 py-4 flex justify-between items-center">
+                            <h1 className="text-xl font-bold">Menu Navigation</h1>
+                            <div className="flex gap-4 items-center">
+                                {isMockMode && <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">Mock Mode</span>}
+                                <button onClick={toggleTheme}><span className="material-symbols-rounded">{isDark ? 'light_mode' : 'dark_mode'}</span></button>
                             </div>
                         </header>
-
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar">
-                            {loadingData ? (
-                                <div className="h-full flex items-center justify-center">
-                                    <div className="flex flex-col items-center text-slate-400">
-                                        <span className="material-symbols-rounded text-[40px] animate-spin mb-4 text-emerald-500">progress_activity</span>
-                                        <p>Memuat data...</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    {activeMenu === 'dashboard' && <DashboardView data={data} />}
-                                    {activeMenu === 'data' && <DataView data={data} onRefresh={loadData} showToast={(msg, type) => setToast({msg, type})} />}
-                                    {activeMenu === 'report' && <ReportView data={data} />}
-                                    {activeMenu === 'settings' && <SettingsView user={user} toggleTheme={toggleTheme} isDark={isDark} showToast={(msg, type) => setToast({msg, type})} />}
-                                </>
-                            )}
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {active === 'dashboard' && <DashboardView data={data} />}
+                            {active === 'data' && <DataView data={data} onRefresh={loadData} showToast={(m, t) => setToast({msg:m, type:t})} />}
+                            {active === 'report' && <ReportView data={data} />}
+                            {active === 'settings' && <SettingsView user={user} toggleTheme={toggleTheme} isDark={isDark} showToast={(m, t) => setToast({msg:m, type:t})} />}
                         </div>
-
-                        <footer className="text-center py-3 text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 z-10">
-                            Generated by Bot AppScript | By @opickdigital
-                        </footer>
-                        
                         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
                     </main>
                 </div>
