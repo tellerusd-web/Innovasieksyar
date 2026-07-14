@@ -1,355 +1,312 @@
 <!DOCTYPE html>
-<html lang="id" class="light">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Kolektor Luaran Inovasi</title>
+    <title>InovaHub - Kolektor Luaran Inovasi</title>
     
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Library Export Excel & PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        emerald: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857' }
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7',
+                            400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857',
+                            800: '#065f46', 900: '#064e3b',
+                        }
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        .dark .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        body { transition: background-color 0.3s, color 0.3s; }
-
-        .material-symbols-rounded {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            display: inline-block;
-            vertical-align: middle;
-            line-height: 1;
-        }
-
-        @media print {
-            body { background: white !important; color: black !important; }
-            aside, header, .no-print { display: none !important; }
-            main { overflow: visible !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
-            .glass-panel { box-shadow: none !important; border: 1px solid #ccc !important; background: transparent !important; }
-            ::-webkit-scrollbar { display: none; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .dark .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-300">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+        // PENTING: Ganti URL di bawah ini dengan URL Web App Google Apps Script Bos!
+        const GAS_URL = 'https://script.google.com/a/macros/gdrive1.biz.id/s/AKfycbx8TpGpfiLNSrYo2Ye6TQKuTre0oVq88Qmco-L67-_5eevkXfQN0uCQ9qSmoiLG4OHq/exec'; 
 
-        // ====================================================================
-        // PENTING BOS! MASUKKAN URL WEB APP ANDA DI DALAM TANDA KUTIP DI BAWAH INI
-        // CONTOH: const GAS_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
-        // ====================================================================
-        const GAS_URL = 'https://script.google.com/a/macros/gdrive1.biz.id/s/AKfycbx8TpGpfiLNSrYo2Ye6TQKuTre0oVq88Qmco-L67-_5eevkXfQN0uCQ9qSmoiLG4OHq/exec';
-        
-        const isMockMode = GAS_URL === 'MASUKKAN_URL_WEB_APP_APPSCRIPT_DISINI' || GAS_URL === '';
-        
+        const Icon = ({ name, className = "" }) => (
+            <span className={`material-symbols-outlined ${className}`}>{name}</span>
+        );
+
         const mockData = [
-            { id: 'INV-A1B2', timestamp: '2026-07-10T10:00:00Z', nim: '19001111', nama: 'Budi Santoso', prodi: 'Teknik Informatika', judul: 'Sistem Deteksi Penyakit Tanaman', kategori: 'Paten', deskripsi: 'Aplikasi AI', link: 'http://link', status: 'Disetujui' }
+            { id: 'INV-001', timestamp: new Date().toISOString(), nim: '19001111', nama: 'Budi Santoso', prodi: 'Teknik Informatika', judul: 'Sistem Deteksi Penyakit Tanaman', kategori: 'Paten', deskripsi: 'Aplikasi AI pendeteksi penyakit', link: '#', status: 'Disetujui' },
+            { id: 'INV-002', timestamp: new Date().toISOString(), nim: '19002222', nama: 'Siti Aminah', prodi: 'Sistem Informasi', judul: 'Blockchain untuk Supply Chain', kategori: 'Jurnal Internasional', deskripsi: 'Jurnal Scopus Q2', link: '#', status: 'Review' },
+            { id: 'INV-003', timestamp: new Date().toISOString(), nim: '19003333', nama: 'Agus Pratama', prodi: 'Teknik Elektro', judul: 'Robot Pembersih Sungai Otomatis', kategori: 'Produk Tepat Guna', deskripsi: 'Robot bertenaga surya pembersih sampah sungai', link: '#', status: 'Disetujui' },
+            { id: 'INV-004', timestamp: new Date().toISOString(), nim: '19004444', nama: 'Dian Sastro', prodi: 'Desain Komunikasi Visual', judul: 'Kampanye Digital Pelestarian Komodo', kategori: 'Hak Cipta', deskripsi: 'Desain kampanye visual terdaftar HAKI', link: '#', status: 'Draft' }
         ];
 
-        const fetchGasApi = async (action, payload = {}) => {
+        const callApi = async (action, payload = {}) => {
+            if (GAS_URL === 'MASUKKAN_URL_WEB_APP_APPSCRIPT_DISINI') {
+                console.warn("MOCK MODE: Menggunakan data tiruan karena GAS URL belum disetel.");
+                return simulateMock(action, payload);
+            }
+
             try {
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Aman dari blokir CORS
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action, ...payload })
                 });
-                return await response.json();
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                return { success: false, msg: 'Gagal menghubungi server Google Apps Script.' };
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error("API Error:", error);
+                throw new Error("Gagal terhubung ke server. Periksa koneksi internet Anda.");
             }
         };
 
-        const API = {
-            login: async (user, pass) => {
-                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: user==='admin'&&pass==='admin123', name: 'Admin', msg: 'Username/Password salah (Mock)' }), 1000));
-                return await fetchGasApi('login', { user, pass });
-            },
-            getData: async () => {
-                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve(mockData), 800));
-                const res = await fetchGasApi('getData');
-                return Array.isArray(res) ? res : [];
-            },
-            saveData: async (data) => {
-                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: true, msg: 'Data disimpan (Mock)' }), 1000));
-                return await fetchGasApi('saveData', { data });
-            },
-            changePassword: async (user, oldPass, newPass) => {
-                if(isMockMode) return new Promise(resolve => setTimeout(() => resolve({ success: true, msg: 'Password berhasil diubah (Mock)' }), 1000));
-                return await fetchGasApi('changePassword', { user, oldPass, newPass });
-            }
-        };
-
-        const Toast = ({ message, type, onClose }) => {
-            useEffect(() => {
-                const timer = setTimeout(onClose, 3000);
-                return () => clearTimeout(timer);
-            }, []);
-            
-            const bgColor = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            const icon = type === 'success' ? 'check_circle' : 'error';
-            
-            return (
-                <div className={`fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 z-50 animate-bounce`}>
-                    <span className="material-symbols-rounded text-[24px]">{icon}</span>
-                    <span className="font-medium">{message}</span>
-                </div>
-            );
-        };
-
-        const Login = ({ onLogin }) => {
-            const [user, setUser] = useState('');
-            const [pass, setPass] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [error, setError] = useState('');
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setLoading(true);
-                setError('');
-                const res = await API.login(user, pass);
-                setLoading(false);
-                if (res.success) onLogin(res.name);
-                else setError(res.msg);
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900">
-                    <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-50 animate-pulse"></div>
-                    <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-[128px] opacity-50 animate-pulse delay-1000"></div>
-                    
-                    <div className="w-full max-w-md p-8 relative z-10">
-                        <div className="glass-panel p-10 rounded-3xl shadow-2xl border border-white/20">
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg transform rotate-3">
-                                    <span className="material-symbols-rounded text-[32px] text-white -rotate-3">lightbulb</span>
-                                </div>
-                                <h1 className="text-2xl font-bold text-white">Portal Inovasi</h1>
-                                <p className="text-emerald-200 text-sm mt-1">Kolektor Luaran Mahasiswa</p>
-                            </div>
-
-                            {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-sm">{error}</div>}
-
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Username</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-rounded absolute left-3 top-[10px] text-[20px] text-slate-400">person</span>
-                                        <input type="text" value={user} onChange={(e) => setUser(e.target.value)} required 
-                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 outline-none transition" placeholder="Masukkan username" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-rounded absolute left-3 top-[10px] text-[20px] text-slate-400">lock</span>
-                                        <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} required 
-                                            className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-emerald-500 outline-none transition" placeholder="••••••••" />
-                                    </div>
-                                </div>
-                                <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-emerald-500/30 transition flex justify-center items-center gap-2">
-                                    {loading ? <span className="material-symbols-rounded animate-spin text-[20px]">progress_activity</span> : 'Masuk Dashboard'}
-                                </button>
-                            </form>
-                            
-                            {isMockMode && (
-                                <div className="mt-6 text-center text-xs text-slate-400 bg-slate-800/50 py-2 rounded-lg">
-                                    <span className="text-emerald-400 font-semibold">Mock Mode Aktif (Coba Tanpa Deploy GAS)</span><br/>
-                                    User: admin | Pass: admin123
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
+        const simulateMock = (action, payload) => {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    if (action === 'login') {
+                        if (payload.user === 'admin' && payload.pass === 'admin123') resolve({ success: true, name: 'Admin Mock', role: 'Administrator' });
+                        else resolve({ success: false, msg: 'Username/Password salah (Mock)' });
+                    } else if (action === 'getData') resolve(mockData);
+                    else if (action === 'saveData' || action === 'changePassword') resolve({ success: true, msg: 'Berhasil (Mock Mode)' });
+                    else resolve({ success: false, msg: 'Unknown action' });
+                }, 800);
+            });
         };
 
         const DashboardView = ({ data }) => {
-            const chartRef = useRef(null);
-            const doughnutRef = useRef(null);
+            const chartRef = React.useRef(null);
+            const chartInstance = React.useRef(null);
 
-            const stats = useMemo(() => {
-                const safeData = Array.isArray(data) ? data : [];
-                return { 
-                    total: safeData.length, 
-                    disetujui: safeData.filter(d => d.status === 'Disetujui').length, 
-                    paten: safeData.filter(d => d.kategori === 'Paten').length, 
-                    startup: safeData.filter(d => d.kategori === 'Startup').length 
-                };
+            React.useEffect(() => {
+                if (!chartRef.current || data.length === 0) return;
+
+                const ctx = chartRef.current.getContext('2d');
+                if (chartInstance.current) chartInstance.current.destroy();
+
+                const categoryCounts = data.reduce((acc, curr) => {
+                    acc[curr.kategori] = (acc[curr.kategori] || 0) + 1;
+                    return acc;
+                }, {});
+
+                try {
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(categoryCounts),
+                            datasets: [{
+                                data: Object.values(categoryCounts),
+                                backgroundColor: ['#059669', '#10b981', '#34d399', '#6ee7b7', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                    });
+                } catch(e) { console.error("Chart Error:", e); }
+
+                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
             }, [data]);
 
-            useEffect(() => {
-                let myChart = null, myDoughnut = null;
-                if (chartRef.current && doughnutRef.current && Array.isArray(data) && data.length > 0) {
-                    try {
-                        const categories = ['Paten', 'Jurnal Internasional', 'Jurnal Nasional', 'Hak Cipta', 'Produk Tepat Guna', 'Startup'];
-                        const counts = categories.map(cat => data.filter(d => d.kategori === cat).length);
-                        myChart = new Chart(chartRef.current, {
-                            type: 'bar',
-                            data: { labels: categories, datasets: [{ label: 'Jumlah', data: counts, backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 8 }] },
-                            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-                        });
-
-                        const statuses = ['Draft', 'Review', 'Disetujui', 'Ditolak'];
-                        myDoughnut = new Chart(doughnutRef.current, {
-                            type: 'doughnut',
-                            data: { labels: statuses, datasets: [{ data: statuses.map(s => data.filter(d => d.status === s).length), backgroundColor: ['#94a3b8', '#fbbf24', '#10b981', '#ef4444'], borderWidth: 0 }] },
-                            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom' } } }
-                        });
-                    } catch (e) { console.error("Chart Error:", e); }
-                }
-                return () => { if (myChart) myChart.destroy(); if (myDoughnut) myDoughnut.destroy(); };
-            }, [data]);
+            const stats = [
+                { title: 'Total Luaran', value: data.length, icon: 'folder_open', color: 'bg-blue-100 text-blue-600' },
+                { title: 'Disetujui', value: data.filter(d => d.status === 'Disetujui').length, icon: 'verified', color: 'bg-emerald-100 text-emerald-600' },
+                { title: 'Dalam Review', value: data.filter(d => d.status === 'Review').length, icon: 'pending_actions', color: 'bg-orange-100 text-orange-600' },
+                { title: 'Draft', value: data.filter(d => d.status === 'Draft').length, icon: 'edit_document', color: 'bg-slate-100 text-slate-600' }
+            ];
 
             return (
-                <div className="space-y-6">
-                    <div className="bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-                        <div className="absolute right-0 top-0 opacity-20 transform translate-x-4 -translate-y-4">
-                            <span className="material-symbols-rounded text-[150px]">workspace_premium</span>
-                        </div>
-                        <div className="relative z-10">
-                            <h2 className="text-2xl font-bold mb-1">Ringkasan Luaran Mahasiswa</h2>
-                            <p className="text-emerald-50">Pantau perkembangan inovasi mahasiswa secara realtime.</p>
-                        </div>
-                    </div>
-
+                <div className="space-y-6 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                            { title: 'Total Inovasi', value: stats.total, icon: 'layers', color: 'text-blue-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-                            { title: 'Disetujui', value: stats.disetujui, icon: 'check_circle', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-                            { title: 'Paten', value: stats.paten, icon: 'shield', color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-                            { title: 'Startup Aktif', value: stats.startup, icon: 'rocket_launch', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-                        ].map((s, i) => (
-                            <div key={i} className="glass-panel p-6 rounded-2xl shadow-sm hover:shadow-md transition">
-                                <div className="flex justify-between items-start">
-                                    <div><p className="text-sm text-slate-500 font-medium">{s.title}</p><h3 className="text-3xl font-bold mt-2">{s.value}</h3></div>
-                                    <div className={`p-3 rounded-xl ${s.bg}`}><span className={`material-symbols-rounded text-[24px] ${s.color}`}>{s.icon}</span></div>
+                        {stats.map((stat, idx) => (
+                            <div key={idx} className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4 hover:-translate-y-1 transition-transform">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.color}`}>
+                                    <Icon name={stat.icon} className="text-3xl" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stat.title}</p>
+                                    <h3 className="text-3xl font-bold">{stat.value}</h3>
                                 </div>
                             </div>
                         ))}
                     </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-96">
-                        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl shadow-sm flex flex-col h-full">
-                            <h3 className="text-lg font-semibold mb-4">Distribusi Kategori</h3>
-                            <div className="flex-grow relative"><canvas ref={chartRef}></canvas></div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-lg font-bold mb-4">Aktivitas Terbaru</h3>
+                            <div className="space-y-4">
+                                {data.slice(0, 5).map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center font-bold">
+                                                {item.nama && item.nama.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold text-sm">{item.judul}</p>
+                                                <p className="text-xs text-slate-500">{item.nama} • {item.kategori}</p>
+                                            </div>
+                                        </div>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'Disetujui' ? 'bg-emerald-100 text-emerald-600' : item.status === 'Review' ? 'bg-orange-100 text-orange-600' : 'bg-slate-200 text-slate-700'}`}>
+                                            {item.status}
+                                        </span>
+                                    </div>
+                                ))}
+                                {data.length === 0 && <p className="text-center text-slate-500 py-4">Belum ada data inovasi.</p>}
+                            </div>
                         </div>
-                        <div className="glass-panel p-6 rounded-2xl shadow-sm flex flex-col h-full">
-                            <h3 className="text-lg font-semibold mb-4">Status Penilaian</h3>
-                            <div className="flex-grow relative"><canvas ref={doughnutRef}></canvas></div>
+                        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                            <h3 className="text-lg font-bold mb-4">Sebaran Kategori</h3>
+                            <div className="h-64 relative">
+                                {data.length > 0 ? <canvas ref={chartRef}></canvas> : <div className="h-full flex items-center justify-center text-slate-400">Tidak ada data grafik</div>}
+                            </div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const DataView = ({ data, onRefresh, showToast }) => {
-            const [searchTerm, setSearchTerm] = useState('');
-            const [filterStatus, setFilterStatus] = useState('Semua');
-            const [isModalOpen, setIsModalOpen] = useState(false);
-            const [formData, setFormData] = useState({});
-            const [loading, setLoading] = useState(false);
+        const DataView = ({ data, onSave, onToast }) => {
+            const [search, setSearch] = React.useState('');
+            const [filterStatus, setFilterStatus] = React.useState('');
+            const [isModalOpen, setIsModalOpen] = React.useState(false);
+            const [formData, setFormData] = React.useState({ id: '', nim: '', nama: '', prodi: '', judul: '', kategori: 'Paten', deskripsi: '', link: '', status: 'Draft' });
 
-            const filteredData = (Array.isArray(data) ? data : []).filter(item => {
-                const searchLower = searchTerm.toLowerCase();
-                const matchSearch = String(item.judul||'').toLowerCase().includes(searchLower) || String(item.nama||'').toLowerCase().includes(searchLower);
-                return matchSearch && (filterStatus === 'Semua' || item.status === filterStatus);
+            // Lengkap: Semua Kategori Luaran
+            const categories = ['Paten', 'Jurnal Internasional', 'Jurnal Nasional', 'Hak Cipta', 'Produk Tepat Guna', 'Startup'];
+
+            const filteredData = data.filter(item => {
+                if (!item) return false;
+                const judul = item.judul ? item.judul.toLowerCase() : '';
+                const nama = item.nama ? item.nama.toLowerCase() : '';
+                const searchTerm = search.toLowerCase();
+                const matchSearch = judul.includes(searchTerm) || nama.includes(searchTerm);
+                const matchStatus = filterStatus ? item.status === filterStatus : true;
+                return matchSearch && matchStatus;
             });
 
-            const handleSave = async (e) => {
+            const handleEdit = (item) => {
+                setFormData(item);
+                setIsModalOpen(true);
+            };
+
+            const handleSubmit = (e) => {
                 e.preventDefault();
-                setLoading(true);
-                const submitData = { ...formData, id: formData.id || 'INV-' + Math.random().toString(36).substr(2, 6).toUpperCase() };
-                const res = await API.saveData(submitData);
-                setLoading(false);
-                if (res.success) { showToast('Data disimpan!', 'success'); setIsModalOpen(false); onRefresh(); }
+                onSave({ ...formData, id: formData.id || 'INV-' + new Date().getTime() });
+                setIsModalOpen(false);
+                onToast("Menyimpan data...");
             };
 
             return (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold">Manajemen Data</h2>
-                        <button onClick={() => { setFormData({kategori: 'Paten', status: 'Draft'}); setIsModalOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl shadow-lg transition flex items-center gap-2">
-                            <span className="material-symbols-rounded">add</span> Tambah
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <h2 className="text-xl font-bold">Manajemen Data Inovasi</h2>
+                        <button onClick={() => { setFormData({ id: '', nim: '', nama: '', prodi: '', judul: '', kategori: 'Paten', deskripsi: '', link: '', status: 'Draft' }); setIsModalOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-500/30 transition-all font-medium">
+                            <Icon name="add" /> Tambah Luaran
                         </button>
                     </div>
 
-                    <div className="glass-panel p-4 rounded-2xl flex gap-4">
-                        <div className="relative flex-1">
-                            <span className="material-symbols-rounded absolute left-3 top-[10px] text-slate-400">search</span>
-                            <input type="text" placeholder="Cari..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border rounded-xl py-2 pl-10 outline-none" />
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-4 bg-slate-50/50 dark:bg-slate-800/50">
+                            <div className="relative flex-1">
+                                <Icon name="search" className="absolute left-3 top-2.5 text-slate-400" />
+                                <input type="text" placeholder="Cari judul atau nama mahasiswa..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none" />
+                            </div>
+                            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="">Semua Status</option>
+                                <option value="Draft">Draft</option>
+                                <option value="Review">Review</option>
+                                <option value="Disetujui">Disetujui</option>
+                            </select>
                         </div>
-                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-slate-50 dark:bg-slate-800 border rounded-xl px-4 py-2 outline-none">
-                            <option value="Semua">Semua Status</option><option value="Draft">Draft</option><option value="Review">Review</option><option value="Disetujui">Disetujui</option>
-                        </select>
-                    </div>
 
-                    <div className="glass-panel rounded-2xl overflow-hidden overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead><tr className="bg-slate-100 dark:bg-slate-800/50 text-sm"><th className="p-4">Judul & Mahasiswa</th><th className="p-4">Kategori</th><th className="p-4">Status</th><th className="p-4 text-right">Aksi</th></tr></thead>
-                            <tbody>
-                                {filteredData.map((item, i) => (
-                                    <tr key={i} className="border-t dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                        <td className="p-4"><div>{item.judul}</div><div className="text-sm text-slate-500">{item.nama} ({item.nim})</div></td>
-                                        <td className="p-4"><span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">{item.kategori}</span></td>
-                                        <td className="p-4"><span className="px-2 py-1 bg-slate-200 text-slate-800 rounded-full text-xs">{item.status}</span></td>
-                                        <td className="p-4 text-right">
-                                            <button onClick={() => { setFormData(item); setIsModalOpen(true); }} className="p-2 text-slate-400 hover:text-emerald-500"><span className="material-symbols-rounded">edit</span></button>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400">
+                                    <tr>
+                                        <th className="p-4 font-medium">Judul Inovasi & Mahasiswa</th>
+                                        <th className="p-4 font-medium">Kategori</th>
+                                        <th className="p-4 font-medium">Status</th>
+                                        <th className="p-4 font-medium">Aksi</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                                    {filteredData.map((item, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors">
+                                            <td className="p-4">
+                                                <p className="font-semibold text-base">{item.judul}</p>
+                                                <p className="text-slate-500 mt-1">{item.nama} ({item.nim}) - {item.prodi}</p>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="px-3 py-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-full text-xs font-medium">{item.kategori}</span>
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'Disetujui' ? 'bg-emerald-100 text-emerald-600' : item.status === 'Review' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4">
+                                                <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-emerald-600 bg-slate-100 hover:bg-emerald-50 dark:bg-slate-700 dark:hover:bg-emerald-900/30 rounded-xl transition-colors">
+                                                    <Icon name="edit" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredData.length === 0 && (
+                                        <tr><td colSpan="4" className="text-center p-8 text-slate-500">Tidak ada data ditemukan.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {isModalOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-6">
-                                <h3 className="text-xl font-bold mb-4">{formData.id ? 'Edit' : 'Tambah'} Luaran</h3>
-                                <form onSubmit={handleSave} className="grid grid-cols-2 gap-4">
-                                    <input required placeholder="Judul" value={formData.judul||''} onChange={e=>setFormData({...formData, judul: e.target.value})} className="col-span-2 p-2 border rounded" />
-                                    <input required placeholder="NIM" value={formData.nim||''} onChange={e=>setFormData({...formData, nim: e.target.value})} className="p-2 border rounded" />
-                                    <input required placeholder="Nama" value={formData.nama||''} onChange={e=>setFormData({...formData, nama: e.target.value})} className="p-2 border rounded" />
-                                    <input required placeholder="Prodi" value={formData.prodi||''} onChange={e=>setFormData({...formData, prodi: e.target.value})} className="p-2 border rounded" />
-                                    <select value={formData.kategori} onChange={e=>setFormData({...formData, kategori: e.target.value})} className="p-2 border rounded"><option value="Paten">Paten</option><option value="Jurnal Internasional">Jurnal Internasional</option><option value="Startup">Startup</option></select>
-                                    <input placeholder="Link Bukti" value={formData.link||''} onChange={e=>setFormData({...formData, link: e.target.value})} className="col-span-2 p-2 border rounded" />
-                                    <div className="col-span-2 flex justify-end gap-2 mt-4">
-                                        <button type="button" onClick={()=>setIsModalOpen(false)} className="px-4 py-2 border rounded">Batal</button>
-                                        <button type="submit" disabled={loading} className="px-4 py-2 bg-emerald-600 text-white rounded">{loading ? 'Menyimpan...' : 'Simpan'}</button>
+                        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
+                            <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+                                <h2 className="text-2xl font-bold mb-6">{formData.id ? 'Edit Luaran' : 'Tambah Luaran'}</h2>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <input required placeholder="NIM" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.nim} onChange={e => setFormData({...formData, nim: e.target.value})} />
+                                        <input required placeholder="Nama Mahasiswa" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.nama} onChange={e => setFormData({...formData, nama: e.target.value})} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <input required placeholder="Program Studi" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.prodi} onChange={e => setFormData({...formData, prodi: e.target.value})} />
+                                        <select className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.kategori} onChange={e => setFormData({...formData, kategori: e.target.value})}>
+                                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                    <input required placeholder="Judul Luaran / Inovasi" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.judul} onChange={e => setFormData({...formData, judul: e.target.value})} />
+                                    <textarea rows="3" placeholder="Deskripsi Singkat" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500 resize-none" value={formData.deskripsi} onChange={e => setFormData({...formData, deskripsi: e.target.value})}></textarea>
+                                    <input type="url" placeholder="Tautan Bukti (G-Drive / Jurnal)" className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} />
+                                    <select className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500 font-medium" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
+                                        <option value="Draft">Status: Draft</option>
+                                        <option value="Review">Status: Review</option>
+                                        <option value="Disetujui">Status: Disetujui</option>
+                                    </select>
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+                                        <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">Batal</button>
+                                        <button type="submit" className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg shadow-emerald-500/30 transition-all">Simpan Data</button>
                                     </div>
                                 </form>
                             </div>
@@ -359,119 +316,409 @@
             );
         };
 
-        const ReportView = ({ data }) => (
-            <div className="space-y-6">
-                <div className="flex justify-between items-center no-print">
-                    <h2 className="text-2xl font-bold">Laporan Inovasi</h2>
-                    <button onClick={() => window.print()} className="bg-blue-600 text-white px-5 py-2 rounded-xl flex items-center gap-2"><span className="material-symbols-rounded">print</span> Cetak</button>
-                </div>
-                <div className="glass-panel p-6 rounded-2xl bg-white dark:bg-slate-900 w-full overflow-hidden">
-                    <div className="text-center mb-6 hidden print:block text-black">
-                        <h1 className="text-2xl font-bold">Laporan Luaran Inovasi</h1>
-                        <p>Dicetak pada: {new Date().toLocaleDateString('id-ID')}</p>
-                    </div>
-                    <table className="w-full text-left border-collapse border">
-                        <thead><tr className="bg-slate-100 text-slate-700 print:text-black"><th className="p-2 border">NIM</th><th className="p-2 border">Nama</th><th className="p-2 border">Judul</th><th className="p-2 border">Kategori</th></tr></thead>
-                        <tbody>{(Array.isArray(data)?data:[]).map((item, i) => <tr key={i}><td className="p-2 border print:text-black">{item.nim}</td><td className="p-2 border print:text-black">{item.nama}</td><td className="p-2 border print:text-black">{item.judul}</td><td className="p-2 border print:text-black">{item.kategori}</td></tr>)}</tbody>
-                    </table>
-                </div>
-            </div>
-        );
-
-        const SettingsView = ({ user, toggleTheme, isDark, showToast }) => {
-            const [oldPass, setOldPass] = useState('');
-            const [newPass, setNewPass] = useState('');
-            const handlePass = async (e) => {
-                e.preventDefault();
-                const res = await API.changePassword(user, oldPass, newPass);
-                showToast(res.msg, res.success ? 'success' : 'error');
-                if(res.success) { setOldPass(''); setNewPass(''); }
+        const ReportView = ({ data }) => {
+            const handleExportPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(18);
+                doc.setTextColor(5, 150, 105); // Emerald-600
+                doc.text("InovaHub", 14, 22);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(51, 65, 85); // Slate-700
+                doc.text("Laporan Rekapitulasi Luaran Mahasiswa", 14, 30);
+                
+                doc.setFontSize(10);
+                doc.text("Dicetak pada: " + new Date().toLocaleDateString('id-ID'), 14, 36);
+                
+                const tableColumn = ["No", "Judul Luaran", "Mahasiswa", "NIM", "Prodi", "Kategori", "Status"];
+                const tableRows = [];
+                
+                data.forEach((item, index) => {
+                    const rowData = [
+                        index + 1,
+                        item.judul || '-',
+                        item.nama || '-',
+                        item.nim || '-',
+                        item.prodi || '-',
+                        item.kategori || '-',
+                        item.status || '-'
+                    ];
+                    tableRows.push(rowData);
+                });
+                
+                doc.autoTable({
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 42,
+                    theme: 'grid',
+                    styles: { fontSize: 8, cellPadding: 3 },
+                    headStyles: { fillColor: [5, 150, 105], textColor: 255 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] }
+                });
+                
+                doc.save(`Laporan_Inovasi_${new Date().getTime()}.pdf`);
             };
+
+            const handleExportExcel = () => {
+                const excelData = data.map((item, index) => ({
+                    "No": index + 1,
+                    "Judul Luaran": item.judul,
+                    "Nama Mahasiswa": item.nama,
+                    "NIM": item.nim,
+                    "Program Studi": item.prodi,
+                    "Kategori": item.kategori,
+                    "Status": item.status,
+                    "Tautan Bukti": item.link
+                }));
+                
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Inovasi");
+                
+                const wscols = [ {wch:5}, {wch:40}, {wch:25}, {wch:15}, {wch:25}, {wch:20}, {wch:15}, {wch:35} ];
+                ws['!cols'] = wscols;
+                
+                XLSX.writeFile(wb, `Laporan_Inovasi_${new Date().getTime()}.xlsx`);
+            };
+            
             return (
-                <div className="space-y-6 max-w-4xl mx-auto">
-                    <h2 className="text-2xl font-bold">Pengaturan</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="glass-panel p-6 rounded-2xl">
-                            <h3 className="text-lg font-semibold mb-4">Ubah Password</h3>
-                            <form onSubmit={handlePass} className="space-y-4">
-                                <input type="password" placeholder="Password Lama" value={oldPass} onChange={e=>setOldPass(e.target.value)} required className="w-full p-3 rounded-xl border outline-none text-black" />
-                                <input type="password" placeholder="Password Baru" value={newPass} onChange={e=>setNewPass(e.target.value)} required className="w-full p-3 rounded-xl border outline-none text-black" />
-                                <button type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl">Simpan Password</button>
-                            </form>
+                <div className="space-y-6 animate-fade-in">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 gap-4">
+                        <h2 className="text-xl font-bold">Laporan Inovasi</h2>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <button onClick={handleExportExcel} className="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 transition-all font-medium">
+                                <Icon name="table_chart" /> Export Excel
+                            </button>
+                            <button onClick={handleExportPDF} className="flex-1 md:flex-none bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-rose-500/30 transition-all font-medium">
+                                <Icon name="picture_as_pdf" /> Export PDF
+                            </button>
                         </div>
-                        <div className="glass-panel p-6 rounded-2xl">
-                            <h3 className="text-lg font-semibold mb-4">Tampilan</h3>
-                            <div className="flex justify-between items-center p-4 border rounded-xl">
-                                <span>Dark Mode</span>
-                                <button onClick={toggleTheme} className={`h-7 w-12 rounded-full transition-colors ${isDark ? 'bg-emerald-500' : 'bg-slate-300'}`}>
-                                    <span className={`block h-5 w-5 rounded-full bg-white transition-transform ${isDark ? 'translate-x-6' : 'translate-x-1'}`} />
-                                </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-x-auto">
+                        <div className="text-center mb-8 pb-6 border-b border-slate-200 dark:border-slate-700">
+                            <h1 className="text-2xl font-bold uppercase">Laporan Rekapitulasi Luaran Mahasiswa</h1>
+                            <p className="opacity-70 mt-2">Pratinjau Data - {new Date().toLocaleDateString('id-ID')}</p>
+                        </div>
+                        <table className="w-full text-left text-sm border-collapse min-w-[800px]">
+                            <thead className="bg-slate-100 dark:bg-slate-700">
+                                <tr>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">No</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">Judul Luaran</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">Mahasiswa</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">Prodi</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">Kategori</th>
+                                    <th className="border border-slate-300 dark:border-slate-600 p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3 text-center">{idx + 1}</td>
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3">{item.judul}</td>
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3">{item.nama}<br/><span className="text-xs opacity-70">{item.nim}</span></td>
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3">{item.prodi}</td>
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3">{item.kategori}</td>
+                                        <td className="border border-slate-300 dark:border-slate-600 p-3">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.status === 'Disetujui' ? 'bg-emerald-100 text-emerald-600' : item.status === 'Review' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'}`}>
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {data.length === 0 && <tr><td colSpan="6" className="text-center p-8 opacity-50">Data Laporan Kosong</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsView = ({ user, onToast }) => {
+            const [oldPassword, setOldPassword] = React.useState('');
+            const [newPassword, setNewPassword] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(false);
+
+            const handleUpdatePassword = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                try {
+                    const res = await callApi('changePassword', { user: user.username || 'admin', oldPass: oldPassword, newPass: newPassword });
+                    onToast(res.msg);
+                    if(res.success) {
+                        setOldPassword('');
+                        setNewPassword('');
+                    }
+                } catch(err) {
+                    onToast("Gagal memperbarui password");
+                }
+                setIsLoading(false);
+            };
+
+            return (
+                <div className="space-y-6 animate-fade-in max-w-3xl">
+                    <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100 dark:border-slate-700">
+                            <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl font-bold">
+                                {user && user.name ? user.name.charAt(0) : 'A'}
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold">{user && user.name ? user.name : 'Administrator'}</h2>
+                                <p className="text-slate-500">{user && user.role ? user.role : 'Admin Role'}</p>
                             </div>
                         </div>
+
+                        <h3 className="text-lg font-bold mb-4">Ubah Password Keamanan</h3>
+                        <form onSubmit={handleUpdatePassword} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-slate-600 dark:text-slate-400">Password Lama</label>
+                                <input type="password" required value={oldPassword} onChange={e=>setOldPassword(e.target.value)} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2 text-slate-600 dark:text-slate-400">Password Baru</label>
+                                <input type="password" required value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 outline-none focus:border-emerald-500" />
+                            </div>
+                            <button type="submit" disabled={isLoading} className="mt-4 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-lg shadow-emerald-500/30 transition-all disabled:opacity-50">
+                                {isLoading ? 'Menyimpan...' : 'Perbarui Password'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             );
         };
 
         const App = () => {
-            const [user, setUser] = useState(null);
-            const [active, setActive] = useState('dashboard');
-            const [isDark, setIsDark] = useState(false);
-            const [toast, setToast] = useState(null);
-            const [data, setData] = useState([]);
-
-            useEffect(() => {
-                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    setIsDark(true); document.documentElement.classList.add('dark');
-                }
-            }, []);
-
-            const toggleTheme = () => { setIsDark(!isDark); document.documentElement.classList.toggle('dark'); };
+            const [user, setUser] = React.useState(null);
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [isDark, setIsDark] = React.useState(false);
+            const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
             
-            const loadData = async () => {
-                try {
-                    const result = await API.getData();
-                    setData(Array.isArray(result) ? result : []);
-                } catch(e) { setData([]); }
+            // State Data Utama
+            const [data, setData] = React.useState([]);
+            const [loading, setLoading] = React.useState(false);
+            
+            // State Notifikasi
+            const [toast, setToast] = React.useState('');
+
+            const showToast = (msg) => {
+                setToast(msg);
+                setTimeout(() => setToast(''), 3000);
             };
 
-            useEffect(() => { if (user) loadData(); }, [user]);
+            const toggleTheme = () => {
+                setIsDark(!isDark);
+                document.documentElement.classList.toggle('dark');
+            };
 
-            if (!user) return <Login onLogin={setUser} />;
+            const handleLogin = async (username, password) => {
+                setLoading(true);
+                try {
+                    const res = await callApi('login', { user: username, pass: password });
+                    if (res.success) {
+                        setUser({ ...res, username });
+                        fetchData();
+                    } else {
+                        showToast(res.msg || 'Gagal login');
+                    }
+                } catch(e) { showToast(e.message); }
+                setLoading(false);
+            };
+
+            const fetchData = async () => {
+                setLoading(true);
+                try {
+                    const res = await callApi('getData');
+                    setData(res || []);
+                } catch(e) { showToast(e.message); }
+                setLoading(false);
+            };
+
+            const saveData = async (formData) => {
+                setLoading(true);
+                try {
+                    const res = await callApi('saveData', { data: formData });
+                    showToast(res.msg);
+                    if(res.success) fetchData();
+                } catch(e) { showToast(e.message); }
+                setLoading(false);
+            };
+
+            if (!user) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-100 dark:bg-slate-900">
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-400/20 rounded-full blur-3xl"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/20 rounded-full blur-3xl"></div>
+                        
+                        <div className="w-full max-w-md glass-panel p-8 rounded-[2rem] shadow-2xl relative z-10 border border-white/40 dark:border-slate-700/40 animate-fade-in">
+                            <div className="text-center mb-10">
+                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
+                                    <Icon name="tips_and_updates" className="text-white text-3xl" />
+                                </div>
+                                <h1 className="text-2xl font-bold tracking-tight">Portal Inovasi</h1>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Kolektor Luaran Mahasiswa</p>
+                            </div>
+
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                handleLogin(e.target.username.value, e.target.password.value);
+                            }} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 opacity-80">Username</label>
+                                    <div className="relative">
+                                        <Icon name="person" className="absolute left-3 top-3.5 text-slate-400 text-xl" />
+                                        <input name="username" required className="w-full pl-10 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="admin" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 opacity-80">Password</label>
+                                    <div className="relative">
+                                        <Icon name="lock" className="absolute left-3 top-3.5 text-slate-400 text-xl" />
+                                        <input name="password" type="password" required className="w-full pl-10 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-600 focus:ring-2 focus:ring-emerald-500 outline-none transition-all" placeholder="••••••••" />
+                                    </div>
+                                </div>
+                                <button disabled={loading} type="submit" className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-emerald-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-50 mt-4">
+                                    {loading ? 'Memproses...' : 'Masuk Dashboard'}
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl z-50 animate-fade-in flex items-center gap-2"><Icon name="info" /> {toast}</div>}
+                    </div>
+                );
+            }
+
+            const menuItems = [
+                { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+                { id: 'data', icon: 'database', label: 'Data Inovasi' },
+                { id: 'laporan', icon: 'bar_chart', label: 'Laporan Inovasi' },
+                { id: 'settings', icon: 'settings', label: 'Pengaturan' }
+            ];
+
+            const getGreeting = () => {
+                const hour = new Date().getHours();
+                if(hour < 11) return "Selamat Pagi ☀️";
+                if(hour < 15) return "Selamat Siang 🌤️";
+                if(hour < 18) return "Selamat Sore 🌅";
+                return "Selamat Malam 🌙";
+            };
 
             return (
-                <div className="flex h-screen overflow-hidden">
-                    <aside className="w-64 glass-panel border-r flex flex-col hidden lg:flex">
-                        <div className="p-6 font-bold text-xl flex items-center gap-2"><span className="material-symbols-rounded text-emerald-500">lightbulb</span> InovaHub</div>
-                        <nav className="flex-1 px-4 space-y-2">
-                            {[{id:'dashboard', icon:'dashboard', label:'Dashboard'}, {id:'data', icon:'database', label:'Data'}, {id:'report', icon:'bar_chart', label:'Laporan'}, {id:'settings', icon:'settings', label:'Pengaturan'}].map(m => (
-                                <button key={m.id} onClick={() => setActive(m.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl ${active === m.id ? 'bg-emerald-500/10 text-emerald-600' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
-                                    <span className="material-symbols-rounded">{m.icon}</span> {m.label}
+                <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-900">
+                    {/* Sidebar Desktop */}
+                    <aside className="hidden md:flex flex-col w-72 bg-white dark:bg-slate-800 border-r border-slate-100 dark:border-slate-700 z-20">
+                        <div className="p-6 flex items-center gap-3">
+                            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                                <Icon name="tips_and_updates" className="text-white" />
+                            </div>
+                            <span className="text-xl font-bold tracking-tight">InovaHub</span>
+                        </div>
+                        <div className="px-4 py-2">
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-2">Menu Navigation</p>
+                            <nav className="space-y-1">
+                                {menuItems.map(item => (
+                                    <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-all ${activeTab === item.id ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                                        <Icon name={item.icon} /> {item.label}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                        <div className="mt-auto p-4 border-t border-slate-100 dark:border-slate-700">
+                            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl">
+                                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                                    {user && user.name ? user.name.charAt(0) : 'A'}
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="text-sm font-bold truncate">{user && user.name ? user.name : 'Admin'}</p>
+                                    <p className="text-xs text-slate-500 truncate">{user && user.role ? user.role : 'Administrator'}</p>
+                                </div>
+                                <button onClick={() => window.location.reload()} className="p-2 text-slate-400 hover:text-rose-500 transition-colors">
+                                    <Icon name="logout" />
                                 </button>
-                            ))}
-                        </nav>
-                        <div className="p-4 border-t flex justify-between items-center">
-                            <span className="font-semibold">{user}</span>
-                            <button onClick={() => setUser(null)} className="text-red-500"><span className="material-symbols-rounded">logout</span></button>
+                            </div>
                         </div>
                     </aside>
 
-                    <main className="flex-1 flex flex-col h-screen overflow-hidden">
-                        <header className="glass-panel border-b px-6 py-4 flex justify-between items-center">
-                            <h1 className="text-xl font-bold">Menu Navigation</h1>
-                            <div className="flex gap-4 items-center">
-                                {isMockMode && <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">Mock Mode</span>}
-                                <button onClick={toggleTheme}><span className="material-symbols-rounded">{isDark ? 'light_mode' : 'dark_mode'}</span></button>
+                    {/* Main Content */}
+                    <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+                        {/* Header */}
+                        <header className="h-20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-700 flex items-center justify-between px-6 z-10 sticky top-0">
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 bg-slate-100 dark:bg-slate-700 rounded-xl">
+                                    <Icon name="menu" />
+                                </button>
+                                <h2 className="text-xl font-bold">{getGreeting()}</h2>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button onClick={toggleTheme} className="p-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full transition-colors">
+                                    <Icon name={isDark ? 'light_mode' : 'dark_mode'} />
+                                </button>
+                                <div className="hidden md:block text-sm font-medium text-slate-500 bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-full">
+                                    {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                </div>
                             </div>
                         </header>
-                        <div className="flex-1 overflow-y-auto p-6">
-                            {active === 'dashboard' && <DashboardView data={data} />}
-                            {active === 'data' && <DataView data={data} onRefresh={loadData} showToast={(m, t) => setToast({msg:m, type:t})} />}
-                            {active === 'report' && <ReportView data={data} />}
-                            {active === 'settings' && <SettingsView user={user} toggleTheme={toggleTheme} isDark={isDark} showToast={(m, t) => setToast({msg:m, type:t})} />}
+
+                        {/* Content Scroll Area */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+                            {loading && (
+                                <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-40 flex items-center justify-center">
+                                    <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                            
+                            <div className="max-w-7xl mx-auto">
+                                {activeTab === 'dashboard' && <DashboardView data={data} />}
+                                {activeTab === 'data' && <DataView data={data} onSave={saveData} onToast={showToast} />}
+                                {activeTab === 'laporan' && <ReportView data={data} />}
+                                {activeTab === 'settings' && <SettingsView user={user} onToast={showToast} />}
+                            </div>
+                            
+                            <div className="mt-12 text-center text-sm text-slate-400 pb-20 md:pb-4">
+                                Generated by Bot AppScript | By @opickdigital
+                            </div>
                         </div>
-                        {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
                     </main>
+
+                    {/* Mobile Bottom Navigation */}
+                    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-around p-3 pb-safe z-30">
+                        {menuItems.map(item => (
+                            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center gap-1 p-2 ${activeTab === item.id ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                <Icon name={item.icon} className={activeTab === item.id ? 'fill-current' : ''} />
+                                <span className="text-[10px] font-medium">{item.label.split(' ')[0]}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Mobile Sidebar Overlay */}
+                    {isSidebarOpen && (
+                        <div className="md:hidden fixed inset-0 bg-slate-900/50 z-50 flex" onClick={() => setIsSidebarOpen(false)}>
+                            <div className="w-64 bg-white dark:bg-slate-800 h-full p-6 animate-fade-in" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-8">
+                                    <span className="text-xl font-bold">Menu</span>
+                                    <button onClick={() => setIsSidebarOpen(false)}><Icon name="close" /></button>
+                                </div>
+                                <nav className="space-y-2">
+                                    {menuItems.map(item => (
+                                        <button key={item.id} onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium ${activeTab === item.id ? 'bg-emerald-50 text-emerald-600' : 'text-slate-600'}`}>
+                                            <Icon name={item.icon} /> {item.label}
+                                        </button>
+                                    ))}
+                                    <button onClick={() => window.location.reload()} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-rose-500 mt-8 border border-rose-100">
+                                        <Icon name="logout" /> Keluar
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Toast */}
+                    {toast && (
+                        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl z-50 animate-fade-in flex items-center gap-2">
+                            <Icon name="info" /> {toast}
+                        </div>
+                    )}
                 </div>
             );
         };
